@@ -9,6 +9,7 @@
   display: flex;
   flex-direction: row;
   justify-content: space-around;
+  transition: all 2s ease-out;
 }
 .type-list {
   width: 20%;
@@ -50,6 +51,7 @@
   gap: 10px;
   margin-top: 10px;
   margin-left: 10px;
+ 
   
 }
 
@@ -199,10 +201,11 @@ height: 40px;
 }
 
 
-.itemDetails{
+#itemDetails{
 grid-row: 1/1;
 grid-column: 1/-1;
 width: 700px;
+height: 400px;
 display: grid;
 grid-template-columns: repeat(4, 1fr );
 grid-template-rows: repeat(4, auto);
@@ -213,13 +216,13 @@ box-sizing: border-box;
 border: 1px solid lightgrey;
 border-radius: 10px;
 position: fixed;
-top: 20%;
-right: 15%;
+/* top: 20%;
+right: 15%; */
 background-color: antiquewhite;
 
 }
 
-.itemDetails img{
+#itemDetails img{
 grid-row: 1/5;
 grid-column: 1/2;
 justify-self: start;
@@ -229,7 +232,7 @@ border: 1px solid lightgrey;
 border-radius: 15px;
 }
 
-.itemDetails h3{
+#itemDetails h3{
 grid-row: 1/1;
 grid-column: 2/-1;
 text-align: center;
@@ -238,21 +241,21 @@ align-self: center;
 
 }
 
-.itemDetails  div{
+#itemDetails  div{
 justify-self: center;
 align-self: center;
 text-align: center;
 width: 120px;
 grid-row: 2/3; 
 }
-.itemDetails div:nth-child(5){
+#itemDetails div:nth-child(5){
 justify-self: center;
 align-self: center;
 text-align: center;
 box-sizing: border-box;
 }
 
-.itemDetails div:nth-child(5) div{
+#itemDetails div:nth-child(5) div{
 background: linear-gradient(rgb(99, 7, 141) 0%, rgb(174, 0, 255) 100%);
 font-weight: 600;
 width: 80px;
@@ -262,7 +265,7 @@ border-radius: 10px;
 padding: 5px;
 box-sizing: border-box;
 }
-.itemDetails div:nth-child(6){
+#itemDetails div:nth-child(6){
 grid-row: 3/3;
 grid-column: 2/-1;
 text-align: center;
@@ -270,14 +273,13 @@ align-self: center;
 justify-self: center;
 width: 100%;
 }
-.itemDetails .addClass {
-grid-row: 4/4;
+
+
+#itemDetails .addClass {
+  grid-row: 4/4;
 grid-column: 2/-1;
 align-self: center;
 justify-self: center;
-}
-
-.itemDetails .addClass button{
   width: 112px;
 height: 48px;
 color: white;
@@ -285,6 +287,7 @@ font-weight: 600;
 background-color: rgba(255,50,105);
 border-radius: 5px;
 border: none;
+box-sizing: border-box;
 }
 
 .popUp{
@@ -340,44 +343,109 @@ color: white;
 
 }
 
+.cartDiv{
+ position: fixed;
+  top: 80px;
+  right: -342px;
+  width: 350px;
+  height: calc(100vh - 80px);
+  background-color: #7c0ab1;
+  overflow: auto;
+  margin-bottom: 200px;
+  color: white;
+  transition: all 2s ease-out;
+  /* display: none; */
 
-.cartTable {
-width: 50%;
-border: 1px solid lightgrey;
-margin-top: 20px;
+
 }
 
-.cartTable th, .cartTable td {
-text-align: left;
-padding: 10px;
-border: 1px solid lightgrey;
+.cartDiv #cartBlock{
+  width: 100%;
+  height: 150px;
+  display: flex;
+  justify-content: space-around;
+  flex-direction: row;
+  border-bottom: 1px solid gray;
 }
 
-.cartTable th {
-background-color: rgb(68, 169, 68);
+.cartDiv #cartBlock .cartItemDetails{
+  width: 200px;
+ text-align: center;
+}
+
+
+
+
+
+.cartDiv #cartBlock .cartItemDetails .addClass {
+display: flex;
+justify-content: space-evenly;
+align-items: center;
+  width: 60px;
+height: 70%;
 color: white;
-font-weight: bold;
-}
-
-.cartTable td button {
+font-weight: 600;
 background-color: rgba(255,50,105);
-color: white;
-border: none;
 border-radius: 5px;
-padding: 5px 10px;
-cursor: pointer;
+border: none;
+box-sizing: border-box;
 }
 
-.cartTable td button:hover {
-background-color: red;
+.priceAndQuantity{
+  display: flex;
+  justify-content: space-around;
+  height: 35px;
+  align-items: center;
 }
 
-.cartTable tr:last-child th {
-text-align: right;
+.cartDiv .total{
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+width: 350px;
+height: 140px;
+padding-top: 0px;
+box-sizing: border-box;
+border: 1px solid black;
+padding: 5px;
+position: sticky;
+top: 0px;
+background-color: #7c0ab1;
+box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+
 }
 
-.cartTable tr:last-child td {
-font-weight: bold;
+.total div{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width:   100%;
+  height: 20px;
+
+}
+
+.total div p{
+  width: 100px;
+  padding-left: 20px;
+
+}
+
+.hideCart{
+  position:fixed;
+  top: 120px;
+  right: -14px;
+  width: 80px;
+  height: 25px;
+  background-color: black;
+  color: white;
+  transform: rotate(270deg);
+  text-align: center;
+  padding-top: 10px;
+  z-index: 1;
+  border-radius: 10px 10px 0px 0px;
+  transition: all 2s ease-out;
+
 }
 
 

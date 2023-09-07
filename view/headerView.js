@@ -1,6 +1,7 @@
 import { ContainerView } from "./containerView";
 import { Controller } from "../controller/controller";
 import { Model } from "../model/model";
+import { CartView } from "./cartView/cartView";
 export class HeaderView{
     constructor(data){
         this.data =  data;
@@ -16,7 +17,11 @@ export class HeaderView{
        this.searchInput = document.querySelector('input');
        this.searchedItems();
        this.ContainerView = new ContainerView(this.data)
-       this.controller =  new Controller(this.data)
+       this.controller =  new Controller(this.data);
+       this.cartView = new CartView(this.data);
+       this.container = document.querySelector(".container");
+       console.log(this.container)
+        //  this.cartButton()
     }
 
   headerMainContent(){
@@ -80,4 +85,23 @@ export class HeaderView{
         }
     });
 }
+ 
+cartButton(){
+    const cartbutton = this.header.querySelector("#cartButton");
+   
+    let itemList = this.container.querySelector(".item-list");
+    cartbutton.addEventListener("click",()=>{
+     
+     
+     itemList.style.gridTemplateColumns =  "repeat(4,1fr)";
+     this.container.style.width = 'calc(100vw - 380px)';
+     this.cartView.cartRendering(this.data);
+     const cartDiv = document.querySelector(".cartDiv");
+     cartDiv.style.right = "10px"
+     cartDiv.style.display = "block"
+  
+     
+    })
+}
+
 }

@@ -4,6 +4,7 @@ export class Controller{
     constructor(data){
         this.data = data;
         console.log("hyyy");
+        
        
     }
 
@@ -26,4 +27,17 @@ export class Controller{
   });
   return searchedThing;
   }
-}
+
+
+  cartitems(data){
+    
+      let cartData = data.filter((item)=>{
+        return item.quantity > 0;
+      })
+
+      console.log(cartData)
+    };
+
+  }
+
+

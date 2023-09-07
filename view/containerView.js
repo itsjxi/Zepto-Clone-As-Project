@@ -1,6 +1,7 @@
 
 import { Controller } from "../controller/controller";
-
+import { CartView } from "./cartView/cartView";
+// import { AddSubButton } from "./addandSubButton";
 export class ContainerView{
     constructor(data){
         this.data = data;
@@ -9,12 +10,13 @@ export class ContainerView{
         console.log(this.itemList)
         this.controller =  new Controller(this.data)
         this.elementList = this.controller.categories(this.data);
-        
+         this.cartView = new CartView(this.data);
+        this.cartView.cartRendering(this.data);
+        // this.addSubButton = new AddSubButton(this.data);
     }
     init(){
         this.renderItems(this.data);
-        this.renderCategories(this.elementList);
-        this.addButtonFunction(this.data);
+        this.renderCategories(this.elementList);    
         
     }
 
@@ -26,17 +28,30 @@ export class ContainerView{
         itemDiv.classList.add("itemName");  
         itemDiv.innerHTML += `
                                     <img class="itemImage" src="${element.src}" alt="${element.name}">
-                                    <h3 style = " margin-bottom: 0px">${element.name}</h3>
+                                    <h3 id =" ${element.name}" style = " margin-bottom: 0px">${element.name}</h3>
                                     <p style = "color: gray; margin: 5px">${element.unit}</p>
-                                    <div class="shortDescrip">
-                                    <div class="itemPrice"><strong>₹ ${element.discount_price}</strong></div>
-                                    <div class="addClass"><button>Add</button></div>
-                                    </div>
+                                                                   
                                 `;
+
+        if(element.quantity === 0){
+            itemDiv.innerHTML += `   <div class="shortDescrip">
+            <div class="itemPrice"><strong>₹ ${element.discount_price}</strong></div> 
+            <div class="addClass"><div class = "add">Add</div></div>
+            </div>`
+        } else{
+            itemDiv.innerHTML += `   <div class="shortDescrip">
+            <div class="itemPrice"><strong>₹ ${element.discount_price}</strong></div> 
+            <div class="addClass quantityDiv" style = "display: flex"><div class="subtract" style="font-weight: bolder">-</div>
+            <div class="quantity">${element.quantity}</div>
+            <div class="add" style="font-weight: bolder">+</div></div>
+            </div>`
+        }                      
                                 
         this.itemList.appendChild(itemDiv)                    
         this.bindEventOnItem(itemDiv,element);          
        });
+       this.addButtonFunction(data);
+    // this.addSubButton.addButtonFunction(data);
     } 
       
     renderCategories(data){
@@ -47,30 +62,41 @@ export class ContainerView{
             this.typeList.appendChild(typeName);        
             this.bindEventOnCategory(typeName);
         })
+   
        
     }  
 
     bindEventOnItem(itemDiv,element){  
         itemDiv.querySelector(".itemImage").addEventListener("click",() =>{
                 this.itemList.innerHTML = '';
-                this.popUpDescription(element);  
+                this.popUpDescription(element); 
+                this.addButtonFunction(element) 
                 });  
     }
 
     popUpDescription(element) {
         const itemDetails = document.createElement("div");
-        itemDetails.classList.add("itemDetails");   
+        itemDetails.classList.add("itemName");
+        itemDetails.id = "itemDetails"   
         itemDetails.innerHTML = `
             <img src="${element.src}">
-            <h3>${element.name}</h3>
+            <h3 id =" ${element.name}" >${element.name}</h3>
             <div>Price: ${(1 - element.discount_price / 100) * element.price} ₹ /<span style = "color: gray">${element.unit}</span></div>
             <div>MRP: ${element.price} ₹/<span style = "color: gray">${element.unit}</span></div>
             <div>${element.discount_price}% Off</div>
             <div>Country of Origin: ${element.countryoforigin}</div>
-            <div class="addClass"><button >Add</button></div>
+            
         `;
+        if(element.quantity === 0){
+            itemDetails.innerHTML += `<div class="addClass" style = "padding-top: 12px"><div class = "add">Add</div></div>`
+        } else{
+            itemDetails.innerHTML +=`<div class="addClass quantityDiv" style = "display: flex"><div class="subtract" style="font-weight: bolder">-</div>
+            <div class="quantity">${element.quantity}</div>
+            <div class="add" style="font-weight: bolder">+</div></div>`
+        }
         this.itemList.appendChild(itemDetails);
-
+         this.addButtonFunction(element)
+       
     }
 
     bindEventOnCategory(typeName){
@@ -87,59 +113,48 @@ export class ContainerView{
       } 
     
       addButtonFunction(data) {
-        data.forEach((item) => {
-            const addButton = document.querySelectorAll(".addClass");
-            addButton.forEach((button) => {
-                button.addEventListener("click", () => {
-                    this.handleButtonClick(item, button,data);
-                });
+        const addButtonList = document.querySelectorAll(".add");
+        const cartDiv = document.querySelector(".cartDiv");
+        addButtonList.forEach((addButton) => {
+            addButton.addEventListener("click", () => {
+                const itemName = addButton.closest(".itemName").querySelector("h3").textContent;
+                const selectedItem = data.find(item => item.name === itemName);
+                
+                if (selectedItem) {
+                    selectedItem.quantity = (selectedItem.quantity || 0) +1;
+                     this.renderItems(data);
+                     this. quantityManager(data)
+                        this.cartView.cartRendering(data);
+                        // this.controller.cartitems(data); 
+                    
+                }
+            });
+        });
+        return data;
+    }
+    quantityManager(data) {
+        const quantityDivList = document.querySelectorAll(".quantityDiv");
+        
+        quantityDivList.forEach((quantityDiv) => {
+            const addButton = quantityDiv.querySelector(".add");
+            const subButton = quantityDiv.querySelector(".subtract");
+            const quantity = quantityDiv.querySelector(".quantity");
+            const itemName = quantityDiv.closest(".itemName").querySelector("h3").textContent;
+    
+            subButton.addEventListener("click", () => {
+                const selectedItem = data.find(item => item.name === itemName);
+                
+                if (selectedItem && selectedItem.quantity > 0) {
+                    selectedItem.quantity -= 1;
+                    quantity.textContent = selectedItem.quantity;
+                    this.cartView.cartRendering(data);
+                }
+                      if (selectedItem.quantity < 1) {
+                        this.renderItems(data);
+                    }
+                
             });
         });
     }
     
-    handleButtonClick(item, button,data) {
-        const itemName = button.parentElement.parentElement.querySelector("h3").textContent;
-        if (item.name === itemName) {
-            if (item.quantity === 0) {
-                item.quantity = 1;
-                this.updateButtonDisplay(button, item.quantity);
-            } else {
-                const quantityDisplay = button.querySelector(".quantity");
-                const add = button.querySelector(".add");
-                add.addEventListener("click", (event) => {
-                    event.stopPropagation();
-                    item.quantity++;
-                    quantityDisplay.textContent = item.quantity;
-                    console.log(data, "lets see the quantity");
-                });
-    
-                const subtract = button.querySelector(".subtract");
-                subtract.addEventListener("click", (event) => {
-                    event.stopPropagation();
-                    if (item.quantity <= 1) {
-                        this.resetButton(item,button);
-                    } else {
-                        item.quantity = Math.max(0, item.quantity - 1);
-                        quantityDisplay.textContent = item.quantity;
-                    }
-                });
-            }
-        }
-    }
-    
-    updateButtonDisplay(button, quantity) {
-        button.style.display = "flex";
-        button.innerHTML = `
-            <div class="subtract" style="font-weight: bolder">-</div>
-            <div class="quantity">${quantity}</div>
-            <div class="add" style="font-weight: bolder">+</div>`;
-    }
-    
-    resetButton(item,button){
-        button.style.display = "flex";
-        button.innerHTML = `<button>Add</button>`;
-        button.querySelector("button").addEventListener("click", () => {
-           this.handleButtonClick(item, button); 
-        });
-    }   
 }
