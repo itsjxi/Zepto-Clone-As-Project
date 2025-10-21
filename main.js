@@ -1,14 +1,19 @@
 import './style.css'
-import javascriptLogo from './javascript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.js'
 import { Model } from './model/model';
 import { ContainerView } from './view/containerView';
-import { HeaderView } from './view/headerView';
 
-console.log(Model);
-const container = new ContainerView(Model)
-container.init();
+// Initialize the app
+document.addEventListener('DOMContentLoaded', () => {
+    const container = new ContainerView(Model);
+    container.init();
+});
 
-const headerView = new HeaderView(Model);
+// Add loading state
+document.body.style.opacity = '0';
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        document.body.style.transition = 'opacity 0.3s ease';
+        document.body.style.opacity = '1';
+    }, 100);
+});
 

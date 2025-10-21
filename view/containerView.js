@@ -7,12 +7,14 @@ export class ContainerView{
         this.data = data;
         this.itemList = document.querySelector(".item-list")
         this.typeList = document.querySelector(".type-list")
-        console.log(this.itemList)
+        this.sectionTitle = document.getElementById('sectionTitle')
+        this.cartCount = document.getElementById('cartCount')
         this.controller =  new Controller(this.data)
         this.elementList = this.controller.categories(this.data);
-         this.cartView = new CartView(this.data);
-        this.cartView.cartRendering(this.data);
-        // this.addSubButton = new AddSubButton(this.data);
+        this.cartView = new CartView(this.data);
+        this.setupTheme();
+        this.setupSearch();
+        this.setupCartModal();
     }
     init(){
         this.renderItems(this.data);
@@ -22,139 +24,341 @@ export class ContainerView{
 
     renderItems(data){
         this.itemList.innerHTML = ""
-        console.log(data,"renderItem data")
         data.forEach(element => {
         const itemDiv = document.createElement("div");                        
         itemDiv.classList.add("itemName");  
-        itemDiv.innerHTML += `
-                                    <img class="itemImage" src="${element.src}" alt="${element.name}">
-                                    <h3 id =" ${element.name}" style = " margin-bottom: 0px">${element.name}</h3>
-                                    <p style = "color: gray; margin: 5px">${element.unit}</p>
-                                                                   
-                                `;
-
-        if(element.quantity === 0){
-            itemDiv.innerHTML += `   <div class="shortDescrip">
-            <div class="itemPrice"><strong>₹ ${element.discount_price}</strong></div> 
-            <div class="addClass"><div class = "add">Add</div></div>
-            </div>`
-        } else{
-            itemDiv.innerHTML += `   <div class="shortDescrip">
-            <div class="itemPrice"><strong>₹ ${element.discount_price}</strong></div> 
-            <div class="addClass quantityDiv" style = "display: flex"><div class="subtract" style="font-weight: bolder">-</div>
-            <div class="quantity">${element.quantity}</div>
-            <div class="add" style="font-weight: bolder">+</div></div>
-            </div>`
-        }                      
+        itemDiv.innerHTML = `
+            <div class="product-image-container">
+                <img class="itemImage" src="${element.src}" alt="${element.name}">
+                <div class="discount-badge">${Math.round((element.price - element.discount_price) / element.price * 100)}% OFF</div>
+            </div>
+            <div class="product-content">
+                <div class="product-info">
+                    <h3 class="product-title">${element.name}</h3>
+                    <p class="product-unit">${element.unit}</p>
+                    <div class="price-section">
+                        <span class="current-price">₹${element.discount_price}</span>
+                        <span class="original-price">₹${element.price}</span>
+                    </div>
+                </div>
+                <div class="product-actions">
+                    ${element.quantity === 0 ? 
+                        `<button class="add-btn">Add</button>` :
+                        `<div class="quantity-controls">
+                            <button class="qty-btn subtract">−</button>
+                            <span class="quantity-display">${element.quantity}</span>
+                            <button class="qty-btn add">+</button>
+                        </div>`
+                    }
+                </div>
+            </div>
+        `;
                                 
         this.itemList.appendChild(itemDiv)                    
         this.bindEventOnItem(itemDiv,element);          
        });
        this.addButtonFunction(data);
-    // this.addSubButton.addButtonFunction(data);
+       this.updateCartCount();
     } 
       
     renderCategories(data){
+        // Add "All" category at the beginning
+        const allCategory = document.createElement("div");
+        allCategory.classList.add("typeName", "active");
+        allCategory.innerHTML = `🛒 All`;
+        this.typeList.appendChild(allCategory);
+        this.bindEventOnCategory(allCategory, "All");
+        
+        // Add category icons
+        const categoryIcons = {
+            'Fresh Fruits': '🍎',
+            'Fresh Vegetables': '🥕', 
+            'leafy Herbs': '🌿',
+            'Flowers': '🌸',
+            'Exotic': '🥒',
+            'Kitchen': '🥛',
+            'House Hold': '🧽'
+        };
+        
         data.forEach((value)=>{
             const typeName = document.createElement("div");                    
-            typeName.classList.add("typeName");                                
-            typeName.textContent = value;                                
+            typeName.classList.add("typeName");
+            const icon = categoryIcons[value] || '📦';
+            typeName.innerHTML = `${icon} ${value}`;                                
             this.typeList.appendChild(typeName);        
-            this.bindEventOnCategory(typeName);
+            this.bindEventOnCategory(typeName, value);
         })
-   
-       
     }  
 
     bindEventOnItem(itemDiv,element){  
-        itemDiv.querySelector(".itemImage").addEventListener("click",() =>{
-                this.itemList.innerHTML = '';
+        const imageContainer = itemDiv.querySelector(".product-image-container");
+        imageContainer.addEventListener("click",() =>{
                 this.popUpDescription(element); 
-                this.addButtonFunction(element) 
                 });  
     }
 
     popUpDescription(element) {
-        const itemDetails = document.createElement("div");
-        itemDetails.classList.add("itemName");
-        itemDetails.id = "itemDetails"   
-        itemDetails.innerHTML = `
-            <img src="${element.src}">
-            <h3 id =" ${element.name}" >${element.name}</h3>
-            <div>Price: ${(1 - element.discount_price / 100) * element.price} ₹ /<span style = "color: gray">${element.unit}</span></div>
-            <div>MRP: ${element.price} ₹/<span style = "color: gray">${element.unit}</span></div>
-            <div>${element.discount_price}% Off</div>
-            <div>Country of Origin: ${element.countryoforigin}</div>
-            
+        // Create modal overlay
+        const overlay = document.createElement("div");
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
         `;
-        if(element.quantity === 0){
-            itemDetails.innerHTML += `<div class="addClass" style = "padding-top: 12px"><div class = "add">Add</div></div>`
-        } else{
-            itemDetails.innerHTML +=`<div class="addClass quantityDiv" style = "display: flex"><div class="subtract" style="font-weight: bolder">-</div>
-            <div class="quantity">${element.quantity}</div>
-            <div class="add" style="font-weight: bolder">+</div></div>`
-        }
-        this.itemList.appendChild(itemDetails);
-         this.addButtonFunction(element)
-       
+        
+        const itemDetails = document.createElement("div");
+        itemDetails.id = "itemDetails";
+        itemDetails.innerHTML = `
+            <img src="${element.src}" alt="${element.name}">
+            <div>
+                <h3>${element.name}</h3>
+                <div>Price: ₹${element.discount_price} / ${element.unit}</div>
+                <div>MRP: ₹${element.price} / ${element.unit}</div>
+                <div>${Math.round((element.price - element.discount_price) / element.price * 100)}% Off</div>
+                <div>Country of Origin: ${element.countryoforigin}</div>
+                <div class="addClass" style="margin-top: 16px;">
+                    ${element.quantity === 0 ? 
+                        `<div class="add">Add to Cart</div>` :
+                        `<div class="quantityDiv">
+                            <div class="subtract">-</div>
+                            <div class="quantity">${element.quantity}</div>
+                            <div class="add">+</div>
+                        </div>`
+                    }
+                </div>
+            </div>
+        `;
+        
+        overlay.appendChild(itemDetails);
+        document.body.appendChild(overlay);
+        
+        // Close on overlay click
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                document.body.removeChild(overlay);
+                this.renderItems(this.data);
+            }
+        });
+        
+        this.addButtonFunction([element]);
     }
 
-    bindEventOnCategory(typeName){
+    bindEventOnCategory(typeName, categoryName){
         typeName.addEventListener("click", (event)=> {   
-            const categoryName = event.target.innerText;
-            this.itemList.innerHTML = "";
-            const heading = document.createElement("h2");
-            heading.classList.add("itemHeading");
-            heading.textContent= categoryName;
-            this.itemList.appendChild(heading);
-            const filteredData = this.controller.filterItems(categoryName);
+            // Remove active class from all categories
+            document.querySelectorAll('.typeName').forEach(cat => cat.classList.remove('active'));
+            // Add active class to clicked category
+            typeName.classList.add('active');
+            
+            // Update section title
+            this.sectionTitle.textContent = categoryName === 'All' ? 'All Products' : categoryName;
+            
+            const filteredData = categoryName === 'All' ? this.data : this.controller.filterItems(categoryName);
             this.renderItems(filteredData); 
         });               
       } 
     
       addButtonFunction(data) {
-        const addButtonList = document.querySelectorAll(".add");
-        const cartDiv = document.querySelector(".cartDiv");
+        const addButtonList = document.querySelectorAll(".add, .add-btn");
         addButtonList.forEach((addButton) => {
             addButton.addEventListener("click", () => {
-                const itemName = addButton.closest(".itemName").querySelector("h3").textContent;
-                const selectedItem = data.find(item => item.name === itemName);
+                const itemName = addButton.closest(".itemName").querySelector(".product-title").textContent;
+                const selectedItem = Array.isArray(data) ? 
+                    data.find(item => item.name === itemName) :
+                    this.data.find(item => item.name === itemName);
                 
                 if (selectedItem) {
-                    selectedItem.quantity = (selectedItem.quantity || 0) +1;
-                     this.renderItems(data);
-                     this. quantityManager(data)
-                        this.cartView.cartRendering(data);
-                        // this.controller.cartitems(data); 
+                    selectedItem.quantity = (selectedItem.quantity || 0) + 1;
+                    this.updateCartCount();
                     
+                    // Check if we're in popup mode
+                    if (document.getElementById('itemDetails')) {
+                        // Update popup
+                        const popup = document.getElementById('itemDetails');
+                        const quantityDiv = popup.querySelector('.addClass');
+                        quantityDiv.innerHTML = `
+                            <div class="quantityDiv">
+                                <div class="subtract">-</div>
+                                <div class="quantity">${selectedItem.quantity}</div>
+                                <div class="add">+</div>
+                            </div>
+                        `;
+                        this.addButtonFunction([selectedItem]);
+                        this.quantityManager([selectedItem]);
+                    } else {
+                        // Update main view
+                        this.renderItems(this.data);
+                        this.quantityManager(this.data);
+                    }
                 }
             });
         });
         return data;
     }
     quantityManager(data) {
-        const quantityDivList = document.querySelectorAll(".quantityDiv");
+        const quantityControls = document.querySelectorAll(".quantity-controls, .quantityDiv");
         
-        quantityDivList.forEach((quantityDiv) => {
-            const addButton = quantityDiv.querySelector(".add");
-            const subButton = quantityDiv.querySelector(".subtract");
-            const quantity = quantityDiv.querySelector(".quantity");
-            const itemName = quantityDiv.closest(".itemName").querySelector("h3").textContent;
+        quantityControls.forEach((control) => {
+            const addButton = control.querySelector(".add, .qty-btn:last-child");
+            const subButton = control.querySelector(".subtract, .qty-btn:first-child");
+            const quantity = control.querySelector(".quantity, .quantity-display");
+            const itemName = control.closest(".itemName").querySelector(".product-title, h3").textContent;
     
-            subButton.addEventListener("click", () => {
-                const selectedItem = data.find(item => item.name === itemName);
-                
-                if (selectedItem && selectedItem.quantity > 0) {
-                    selectedItem.quantity -= 1;
-                    quantity.textContent = selectedItem.quantity;
-                    this.cartView.cartRendering(data);
-                }
-                      if (selectedItem.quantity < 1) {
-                        this.renderItems(data);
+            if (subButton) {
+                subButton.addEventListener("click", () => {
+                    const selectedItem = data.find(item => item.name === itemName);
+                    
+                    if (selectedItem && selectedItem.quantity > 0) {
+                        selectedItem.quantity -= 1;
+                        this.updateCartCount();
+                        if (selectedItem.quantity < 1) {
+                            this.renderItems(this.data);
+                        } else {
+                            quantity.textContent = selectedItem.quantity;
+                        }
                     }
-                
-            });
+                });
+            }
         });
     }
     
+    updateCartCount() {
+        const totalItems = this.data.reduce((sum, item) => sum + (item.quantity || 0), 0);
+        this.cartCount.textContent = totalItems;
+        this.cartCount.style.display = totalItems > 0 ? 'flex' : 'none';
+    }
+    
+    setupTheme() {
+        const themeToggle = document.getElementById('themeToggle');
+        const savedTheme = localStorage.getItem('quickkart-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+        
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('quickkart-theme', newTheme);
+        });
+    }
+    
+    setupSearch() {
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            if (query.trim()) {
+                const filteredData = this.data.filter(item => 
+                    item.name.toLowerCase().includes(query) ||
+                    item.type.toLowerCase().includes(query)
+                );
+                this.sectionTitle.textContent = `Search: "${e.target.value}"`;
+                this.renderItems(filteredData);
+            } else {
+                this.sectionTitle.textContent = 'All Products';
+                this.renderItems(this.data);
+            }
+        });
+    }
+    
+    setupCartModal() {
+        const cartButton = document.getElementById('cartButton');
+        const cartModal = document.getElementById('cartModal');
+        const closeCart = document.getElementById('closeCart');
+        
+        cartButton.addEventListener('click', () => {
+            this.openCartModal();
+        });
+        
+        closeCart.addEventListener('click', () => {
+            cartModal.style.display = 'none';
+        });
+        
+        cartModal.addEventListener('click', (e) => {
+            if (e.target === cartModal) {
+                cartModal.style.display = 'none';
+            }
+        });
+    }
+    
+    openCartModal() {
+        const cartItems = this.data.filter(item => item.quantity > 0);
+        const cartItemsContainer = document.getElementById('cartItems');
+        const cartFooter = document.getElementById('cartFooter');
+        const cartModal = document.getElementById('cartModal');
+        
+        if (cartItems.length === 0) {
+            cartItemsContainer.innerHTML = `
+                <div class="empty-cart">
+                    <div class="empty-cart-icon">🛒</div>
+                    <p>Your cart is empty</p>
+                </div>
+            `;
+            cartFooter.innerHTML = '';
+        } else {
+            cartItemsContainer.innerHTML = cartItems.map(item => `
+                <div class="cart-item">
+                    <img src="${item.src}" alt="${item.name}" class="cart-item-image">
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-details">${item.unit}</div>
+                        <div class="cart-item-price">₹${item.discount_price} × ${item.quantity}</div>
+                    </div>
+                    <div class="quantityDiv">
+                        <div class="subtract" data-name="${item.name}">-</div>
+                        <div class="quantity">${item.quantity}</div>
+                        <div class="add" data-name="${item.name}">+</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            const subtotal = cartItems.reduce((sum, item) => sum + (item.discount_price * item.quantity), 0);
+            const tax = subtotal * 0.18;
+            const total = subtotal + tax;
+            
+            cartFooter.innerHTML = `
+                <div class="total-row">
+                    <span>Subtotal:</span>
+                    <span>₹${subtotal.toFixed(2)}</span>
+                </div>
+                <div class="total-row">
+                    <span>Tax (18%):</span>
+                    <span>₹${tax.toFixed(2)}</span>
+                </div>
+                <div class="total-row final">
+                    <span>Total:</span>
+                    <span>₹${total.toFixed(2)}</span>
+                </div>
+                <button class="checkout-button">Proceed to Checkout</button>
+            `;
+            
+            // Add event listeners for cart quantity controls
+            cartItemsContainer.querySelectorAll('.subtract, .add').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const itemName = e.target.dataset.name;
+                    const item = this.data.find(i => i.name === itemName);
+                    if (item) {
+                        if (e.target.classList.contains('subtract')) {
+                            item.quantity = Math.max(0, item.quantity - 1);
+                        } else {
+                            item.quantity += 1;
+                        }
+                        this.updateCartCount();
+                        this.renderItems(this.data); // Update main screen
+                        this.openCartModal(); // Refresh cart display
+                    }
+                });
+            });
+        }
+        
+        cartModal.style.display = 'flex';
+    }
 }
