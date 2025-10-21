@@ -1,16 +1,28 @@
-# Zepto Clone
+# QuickKart
 
-A simple Zepto clone implemented using vanilla JavaScript.
-
-## Live Demo
-Check out the live demo [here](https://zepto-2023.netlify.app/).
+A modern grocery delivery app built with vanilla JavaScript and MVC architecture.
 
 ## Features
-- Lightweight Zepto alternative
-- Implemented using closure classes
-- Custom data for different categories
-- Cart functionality
+- Clean, mobile-first responsive design
+- Real-time cart management
+- Product search and filtering
+- Category-based navigation
+- Realistic grocery pricing with discounts
+- Modern UI with CSS custom properties
 
 ## Usage
 1. Clone the repository:
+   ```bash
    git clone https://github.com/itsjxi/Zepto-Clone-As-Project.git
+   cd Zepto-Clone-As-Project
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Start development server:
+   ```bash
+   npm run dev
+   ```
